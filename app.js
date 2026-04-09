@@ -1,14 +1,5 @@
 /* global vis */
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
 function toDisplayText(node) {
   if (node && node.form != null) {
     return String(node.form);
@@ -47,14 +38,14 @@ function buildVisData(raw) {
     }
     titleLines.push("properties: " + JSON.stringify((n && n.properties) ? n.properties : {}, null, 0));
 
-    const safeTitle = escapeHtml(titleLines.join("\n")).replaceAll("\n", "<br>");
-    const safeForm = escapeHtml(form);
-    const label = safeForm.length > 40 ? (safeForm.slice(0, 37) + "…") : safeForm;
+    // vis-network renders node title as plain text (not HTML); use \n only — no <br> or escapeHtml or tags show literally.
+    const titleText = titleLines.join("\n");
+    const labelText = form.length > 40 ? (form.slice(0, 37) + "…") : form;
 
     const visNode = {
       id: n.id,
-      label: label,
-      title: safeTitle,
+      label: labelText,
+      title: titleText,
       font: { size: 14 }
     };
 
@@ -72,7 +63,7 @@ function buildVisData(raw) {
 
   const visEdges = edgesIn.map(function (e, i) {
     const edgeId = (e && e.id != null) ? String(e.id) : ("e-" + i);
-    const edgeLabel = (e && e.type != null) ? escapeHtml(String(e.type)) : "";
+    const edgeLabel = (e && e.type != null) ? String(e.type) : "";
 
     return {
       id: edgeId,

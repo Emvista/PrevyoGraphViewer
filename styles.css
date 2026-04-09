@@ -141,6 +141,11 @@ header button {
   font-variant-numeric: tabular-nums;
 }
 
+/* vis-network: node titles are plain text (not HTML); keep line breaks from \n */
+div.vis-tooltip {
+  white-space: pre-line;
+}
+
 @media (max-width: 900px) {
   .main {
     flex-direction: column;
