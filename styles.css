@@ -22,21 +22,48 @@ header button {
   cursor: pointer;
 }
 
-#container {
+.main {
   flex: 1;
   min-height: 200px;
-  border-top: 1px solid #eee;
+  display: flex;
+  overflow: hidden;
+}
+
+.sidebar {
+  flex: 0 0 380px;
+  max-width: 50vw;
+  display: flex;
+}
+
+.splitter {
+  flex: 0 0 10px;
+  cursor: col-resize;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
+  touch-action: none;
+}
+
+.splitter:focus {
+  outline: 2px solid #4c8bf5;
+  outline-offset: -2px;
+}
+
+.splitter.is-dragging {
+  background: rgba(76, 139, 245, 0.25);
+}
+
+#container {
+  flex: 1;
+  min-width: 200px;
 }
 
 #editor {
   width: 100%;
-  flex: 0 0 180px;
+  height: 100%;
   font-family: ui-monospace, monospace;
   font-size: 12px;
   padding: 8px;
   border: none;
-  border-top: 1px solid #ccc;
-  resize: vertical;
+  resize: horizontal;
 }
 
 .hint {
@@ -61,5 +88,61 @@ header button {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-top: 1px solid #ccc;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-credits a {
+  color: #444;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.footer-credits a:hover {
+  color: #111;
+}
+
+.footer-sep {
+  margin: 0 0.25em;
+}
+
+.footer-prevyo-events {
+  font-weight: 600;
+}
+
+.footer-version {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .main {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    flex: 0 0 auto;
+    max-width: none;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .splitter {
+    display: none;
+  }
+
+  #editor {
+    height: 220px;
+    resize: vertical;
+  }
 }
 

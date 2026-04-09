@@ -19,6 +19,20 @@ function toDisplayText(node) {
   return "";
 }
 
+/** True if any entry in labels[] contains the substring "Event" (e.g. Thing/Abstract/Event/Attack). */
+function labelsContainEvent(labelsArr) {
+  if (!Array.isArray(labelsArr)) {
+    return false;
+  }
+  let i = 0;
+  for (i = 0; i < labelsArr.length; i += 1) {
+    if (String(labelsArr[i]).indexOf("Event") !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function buildVisData(raw) {
   const nodesIn = (raw && Array.isArray(raw.nodes)) ? raw.nodes : [];
   const edgesIn = (raw && Array.isArray(raw.edges)) ? raw.edges : [];
@@ -37,12 +51,23 @@ function buildVisData(raw) {
     const safeForm = escapeHtml(form);
     const label = safeForm.length > 40 ? (safeForm.slice(0, 37) + "…") : safeForm;
 
-    return {
+    const visNode = {
       id: n.id,
       label: label,
       title: safeTitle,
       font: { size: 14 }
     };
+
+    if (labelsContainEvent(n.labels)) {
+      visNode.color = {
+        background: "#c8e6c9",
+        border: "#2e7d32",
+        highlight: { background: "#a5d6a7", border: "#1b5e20" },
+        hover: { background: "#c8e6c9", border: "#2e7d32" }
+      };
+    }
+
+    return visNode;
   });
 
   const visEdges = edgesIn.map(function (e, i) {
@@ -93,7 +118,127 @@ function render(editorEl, errorEl, containerEl, currentNetwork) {
   return new vis.Network(containerEl, data, options);
 }
 
+function clampNumber(value, min, max) {
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
+function applySidebarWidth(sidebarEl, mainEl, widthPx) {
+  const mainRect = mainEl.getBoundingClientRect();
+  const minWidth = 240;
+  const maxWidth = Math.max(minWidth, Math.floor(mainRect.width * 0.7));
+  const clamped = clampNumber(Math.floor(widthPx), minWidth, maxWidth);
+
+  sidebarEl.style.flexBasis = clamped + "px";
+  sidebarEl.style.maxWidth = "none";
+  sidebarEl.style.width = clamped + "px";
+
+  try {
+    window.localStorage.setItem("prevyo.sidebarWidthPx", String(clamped));
+  } catch (_) {
+    // Ignore storage errors (private mode, quota, etc.)
+  }
+}
+
+function setupSplitter(mainEl, sidebarEl, splitterEl) {
+  let dragging = false;
+  let pointerId = null;
+
+  function setDragging(nextDragging) {
+    dragging = nextDragging;
+    splitterEl.classList.toggle("is-dragging", dragging);
+    document.body.style.cursor = dragging ? "col-resize" : "";
+    document.body.style.userSelect = dragging ? "none" : "";
+  }
+
+  function widthFromClientX(clientX) {
+    const rect = mainEl.getBoundingClientRect();
+    return clientX - rect.left;
+  }
+
+  function onPointerDown(ev) {
+    if (!ev.isPrimary) {
+      return;
+    }
+    pointerId = ev.pointerId;
+    splitterEl.setPointerCapture(pointerId);
+    setDragging(true);
+    applySidebarWidth(sidebarEl, mainEl, widthFromClientX(ev.clientX));
+    ev.preventDefault();
+  }
+
+  function onPointerMove(ev) {
+    if (!dragging) {
+      return;
+    }
+    if (pointerId !== ev.pointerId) {
+      return;
+    }
+    applySidebarWidth(sidebarEl, mainEl, widthFromClientX(ev.clientX));
+    ev.preventDefault();
+  }
+
+  function endDrag() {
+    if (!dragging) {
+      return;
+    }
+    setDragging(false);
+    pointerId = null;
+  }
+
+  splitterEl.addEventListener("pointerdown", onPointerDown);
+  splitterEl.addEventListener("pointermove", onPointerMove);
+  splitterEl.addEventListener("pointerup", endDrag);
+  splitterEl.addEventListener("pointercancel", endDrag);
+  splitterEl.addEventListener("lostpointercapture", endDrag);
+
+  splitterEl.addEventListener("keydown", function (ev) {
+    const step = ev.shiftKey ? 40 : 16;
+    if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") {
+      return;
+    }
+
+    const currentBasis = Number.parseInt(sidebarEl.style.flexBasis || "380", 10);
+    const next = ev.key === "ArrowLeft" ? (currentBasis - step) : (currentBasis + step);
+    applySidebarWidth(sidebarEl, mainEl, next);
+    ev.preventDefault();
+  });
+
+  try {
+    const saved = window.localStorage.getItem("prevyo.sidebarWidthPx");
+    if (saved) {
+      const parsed = Number.parseInt(saved, 10);
+      if (Number.isFinite(parsed)) {
+        applySidebarWidth(sidebarEl, mainEl, parsed);
+      }
+    }
+  } catch (_) {
+    // Ignore storage errors
+  }
+}
+
+function syncFooterVersionFromMeta() {
+  const meta = document.querySelector('meta[name="application-version"]');
+  const footerEl = document.querySelector("[data-version-footer]");
+  if (!meta || !footerEl) {
+    return;
+  }
+  const v = meta.getAttribute("content");
+  if (!v) {
+    return;
+  }
+  footerEl.textContent = "version " + v;
+  footerEl.setAttribute("title", "Application version " + v);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  syncFooterVersionFromMeta();
+
   const defaultJson = {
     nodes: [
       { id: "612375318", form: "attaqué", startOffset: 29, endOffset: 36, labels: ["Thing/Abstract/Event/Attack"], properties: { mood: "PART", aspect: "PERFORMANCE", category: "DEFENSE", tense: "PAST", polarity: "POS" } },
@@ -121,8 +266,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorEl = document.getElementById("error");
   const containerEl = document.getElementById("container");
   const btnEl = document.getElementById("btnRender");
+  const mainEl = document.querySelector(".main");
+  const sidebarEl = document.querySelector(".sidebar");
+  const splitterEl = document.querySelector(".splitter");
 
   editorEl.value = JSON.stringify(defaultJson, null, 2);
+
+  if (mainEl && sidebarEl && splitterEl) {
+    setupSplitter(mainEl, sidebarEl, splitterEl);
+  }
 
   let network = null;
   btnEl.addEventListener("click", function () {

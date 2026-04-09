@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prevyo Graph Viewer</title>
-  <meta name="description" content="Viewer de graphes JSON (nodes/edges) rendu interactif avec vis-network. Collez votre JSON et visualisez le graphe." />
+  <meta name="description" content="Visualisez le graphe issu de la sortie Prevyo (JSON nodes/edges). Rendu interactif avec vis-network." />
+  <meta name="application-version" content="0.1.0" />
   <meta property="og:title" content="Prevyo Graph Viewer" />
-  <meta property="og:description" content="Collez un JSON nodes/edges et visualisez le graphe." />
+  <meta property="og:description" content="Collez le JSON graphe exporté par Prevyo et explorez les nœuds et les liens." />
   <meta property="og:type" content="website" />
   <meta name="referrer" content="no-referrer" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'self' data:; style-src 'self'; script-src 'self' https://unpkg.com; upgrade-insecure-requests" />
@@ -19,11 +20,37 @@
   <header>
     <strong>Prevyo Graph Viewer</strong>
     <button type="button" id="btnRender">Afficher le graphe</button>
-    <span class="hint">Collez un objet JSON avec <code>nodes</code> et <code>edges</code>, puis cliquez sur Afficher.</span>
+    <span class="hint">Collez ici le JSON graphe fourni par Prevyo (listes <code>nodes</code> et <code>edges</code>), puis cliquez sur Afficher le graphe.</span>
     <span id="error" class="error" role="status" aria-live="polite"></span>
   </header>
-  <label class="sr-only" for="editor">JSON du graphe</label>
-  <textarea id="editor" spellcheck="false" placeholder='{ "nodes": [...], "edges": [...] }'></textarea>
-  <div id="container"></div>
+  <div class="main">
+    <div class="sidebar">
+      <label class="sr-only" for="editor">JSON du graphe</label>
+      <textarea id="editor" spellcheck="false" placeholder='{ "nodes": [...], "edges": [...] }'></textarea>
+    </div>
+    <div
+      class="splitter"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Redimensionner l'éditeur"
+      tabindex="0"
+    ></div>
+    <div id="container" aria-label="Graphe"></div>
+  </div>
+  <footer class="footer">
+    <span class="footer-credits">
+      Édité par
+      <a href="https://emvista.com" rel="noopener noreferrer" target="_blank">Emvista</a>
+      <span class="footer-sep" aria-hidden="true">·</span>
+      <a
+        class="footer-prevyo-events"
+        href="https://emvista.com/fr-prevyo-events/"
+        rel="noopener noreferrer"
+        target="_blank"
+        title="Prevyo Events — solution de veille stratégique (Emvista)"
+      >Prevyo Events</a>
+    </span>
+    <span class="footer-version" data-version-footer title="Version de l’application">version 0.1.0</span>
+  </footer>
 </body>
 </html>
