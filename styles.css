@@ -137,6 +137,21 @@ header button {
   font-weight: 600;
 }
 
+.footer-credits a.footer-github {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.footer-credits a.footer-github:hover {
+  color: #24292f;
+}
+
+.footer-github-icon {
+  display: block;
+}
+
 .footer-version {
   font-variant-numeric: tabular-nums;
 }
