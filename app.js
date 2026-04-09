@@ -115,7 +115,18 @@ function render(editorEl, errorEl, containerEl, currentNetwork) {
   if (currentNetwork) {
     currentNetwork.destroy();
   }
-  return new vis.Network(containerEl, data, options);
+  const network = new vis.Network(containerEl, data, options);
+  // Safari may lay out the flex pane after first paint; defer fit so vis gets real container size.
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (typeof network.fit === "function") {
+          network.fit({ animation: false });
+        }
+      });
+    });
+  }
+  return network;
 }
 
 function clampNumber(value, min, max) {
