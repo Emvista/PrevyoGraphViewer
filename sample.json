@@ -1,0 +1,219 @@
+{
+    "nodes": [
+      {
+        "id": "69609536",
+        "form": "attaqué",
+        "startOffset": 19,
+        "endOffset": 26,
+        "labels": [
+          "Thing/Abstract/Event/Attack"
+        ],
+        "properties": {
+          "mood": "PART",
+          "aspect": "PERFORMANCE",
+          "category": "DEFENSE",
+          "tense": "PAST",
+          "polarity": "POS"
+        }
+      },
+      {
+        "id": "e6e74e127bcd88e6bde24b76154d478348dde99d37af852a8a2941dbdcb224a2",
+        "form": "Joséphine Déprès",
+        "startOffset": 0,
+        "endOffset": 16,
+        "labels": [
+          "Thing/Concrete/Animate/Livingbeing/Human/Civilian"
+        ],
+        "properties": {
+          "gender": "feminine"
+        }
+      },
+      {
+        "id": "499291066",
+        "form": "2024-03-12T00:00",
+        "startOffset": -1,
+        "endOffset": -1,
+        "labels": [
+          "Thing/Abstract/Time"
+        ],
+        "properties": {
+          "timestamp": [
+            2024,
+            3,
+            12,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "id": "72127447",
+        "form": "et",
+        "startOffset": 33,
+        "endOffset": 35,
+        "labels": [
+          "Thing"
+        ],
+        "properties": {}
+      },
+      {
+        "id": "226558944",
+        "form": "transportait",
+        "startOffset": 83,
+        "endOffset": 95,
+        "labels": [
+          "Thing/Abstract/Event/Move"
+        ],
+        "properties": {
+          "mood": "IND",
+          "aspect": "ACTIVITY",
+          "category": "GENERAL",
+          "tense": "IMP",
+          "polarity": "POS"
+        }
+      },
+      {
+        "id": "a54aa1cee92e90716956db38b0d4f012faaafe54d41317137c622e0ed03eb6fc",
+        "form": "Martin Peucher",
+        "startOffset": 68,
+        "endOffset": 82,
+        "labels": [
+          "Thing/Concrete/Animate/Livingbeing/Human/Civilian"
+        ],
+        "properties": {
+          "gender": "masculine"
+        }
+      },
+      {
+        "id": "1512294550",
+        "form": "camion",
+        "startOffset": 114,
+        "endOffset": 120,
+        "labels": [
+          "Thing/Concrete/Inanimate/Product/Machine/Vehicle"
+        ],
+        "properties": {
+          "quantity:exact": "1"
+        }
+      },
+      {
+        "id": "1071349565",
+        "form": "armes",
+        "startOffset": 100,
+        "endOffset": 105,
+        "labels": [
+          "Thing/Concrete/Inanimate/Product/MilitaryEquipment/Weapon"
+        ],
+        "properties": {
+          "quantity:min": "2"
+        }
+      },
+      {
+        "id": "9600d18c6c05c1c919c41cb4e55a98122c7056c86aa4027a34dc23b5af07c12f",
+        "form": "Paris",
+        "startOffset": 27,
+        "endOffset": 32,
+        "labels": [
+          "Thing/Abstract/Location/Place"
+        ],
+        "properties": {
+          "latitude": 48.8588897,
+          "longitude": 2.320041
+        }
+      },
+      {
+        "id": "5f7286b675357793ce29005bf5d3bedc13ec58f75b4d7fd0fd5bf067f940866e",
+        "form": "Londres",
+        "startOffset": 36,
+        "endOffset": 43,
+        "labels": [
+          "Thing/Abstract/Location/Place"
+        ],
+        "properties": {
+          "latitude": 51.5074456,
+          "longitude": -0.1277653
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "0",
+        "type": "Agent",
+        "source": "69609536",
+        "target": "e6e74e127bcd88e6bde24b76154d478348dde99d37af852a8a2941dbdcb224a2",
+        "properties": {}
+      },
+      {
+        "id": "1",
+        "type": "Time",
+        "source": "69609536",
+        "target": "499291066",
+        "properties": {}
+      },
+      {
+        "id": "2",
+        "type": "Location",
+        "source": "69609536",
+        "target": "72127447",
+        "properties": {}
+      },
+      {
+        "id": "3",
+        "type": "ArgumentIn",
+        "source": "69609536",
+        "target": "e6e74e127bcd88e6bde24b76154d478348dde99d37af852a8a2941dbdcb224a2",
+        "properties": {}
+      },
+      {
+        "id": "4",
+        "type": "TimeMax",
+        "source": "226558944",
+        "target": "69609536",
+        "properties": {}
+      },
+      {
+        "id": "5",
+        "type": "Agent",
+        "source": "226558944",
+        "target": "a54aa1cee92e90716956db38b0d4f012faaafe54d41317137c622e0ed03eb6fc",
+        "properties": {}
+      },
+      {
+        "id": "6",
+        "type": "Location",
+        "source": "226558944",
+        "target": "1512294550",
+        "properties": {}
+      },
+      {
+        "id": "7",
+        "type": "Theme",
+        "source": "226558944",
+        "target": "1071349565",
+        "properties": {}
+      },
+      {
+        "id": "8",
+        "type": "ArgumentIn",
+        "source": "226558944",
+        "target": "a54aa1cee92e90716956db38b0d4f012faaafe54d41317137c622e0ed03eb6fc",
+        "properties": {}
+      },
+      {
+        "id": "9",
+        "type": "Addition",
+        "source": "72127447",
+        "target": "9600d18c6c05c1c919c41cb4e55a98122c7056c86aa4027a34dc23b5af07c12f",
+        "properties": {}
+      },
+      {
+        "id": "10",
+        "type": "Addition",
+        "source": "72127447",
+        "target": "5f7286b675357793ce29005bf5d3bedc13ec58f75b4d7fd0fd5bf067f940866e",
+        "properties": {}
+      }
+    ]
+  }

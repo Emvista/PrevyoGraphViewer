@@ -238,31 +238,14 @@ function syncFooterVersionFromMeta() {
   footerEl.setAttribute("title", "Application version " + v);
 }
 
+const SAMPLE_GRAPH_URL = "./sample.json";
+
+function emptyGraphFallback() {
+  return { nodes: [], edges: [] };
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   syncFooterVersionFromMeta();
-
-  const defaultJson = {
-    nodes: [
-      { id: "612375318", form: "attaqué", startOffset: 29, endOffset: 36, labels: ["Thing/Abstract/Event/Attack"], properties: { mood: "PART", aspect: "PERFORMANCE", category: "DEFENSE", tense: "PAST", polarity: "POS" } },
-      { id: "f239d6bf6fec7240c6320e1c34d0b9a206b84398aa04620e4efee05d47d80db1", form: "Bill Gates", startOffset: 0, endOffset: 10, labels: ["Thing/Concrete/Animate/Livingbeing/Human/Civilian"], properties: { gender: "masculine" } },
-      { id: "1737079599", form: "2024-03-12T00:00", startOffset: -1, endOffset: -1, labels: ["Thing/Abstract/Time"], properties: { timestamp: [2024, 3, 12, 0, 0, 0, 0] } },
-      { id: "211366945", form: "et", startOffset: 43, endOffset: 45, labels: ["Thing"], properties: {} },
-      { id: "2116738172", form: "et", startOffset: 11, endOffset: 13, labels: ["Thing"], properties: { mood: "EMPTY", aspect: "EMPTY", category: "GENERAL", tense: "EMPTY", polarity: "POS" } },
-      { id: "13e6eb6defb785391d03650104542640fd10e96cda7a3f91dd89a841e6945d74", form: "Steve Jobs", startOffset: 14, endOffset: 24, labels: ["Thing/Concrete/Animate/Livingbeing/Human/Civilian"], properties: { gender: "masculine" } },
-      { id: "9600d18c6c05c1c919c41cb4e55a98122c7056c86aa4027a34dc23b5af07c12f", form: "Paris", startOffset: 37, endOffset: 42, labels: ["Thing/Abstract/Location/Place"], properties: { latitude: 48.8588897, longitude: 2.320041 } },
-      { id: "11d7b17889d89c56b99f58bc5f28b4e5bf779209b0291ffa6f34a96b333c59b9", form: "Londre", startOffset: 46, endOffset: 52, labels: ["Thing/Abstract/Location/Place"], properties: { latitude: 51.5074456, longitude: -0.1277653 } }
-    ],
-    edges: [
-      { id: "0", type: "Agent", source: "612375318", target: "f239d6bf6fec7240c6320e1c34d0b9a206b84398aa04620e4efee05d47d80db1", properties: {} },
-      { id: "1", type: "Time", source: "612375318", target: "1737079599", properties: {} },
-      { id: "2", type: "Location", source: "612375318", target: "211366945", properties: {} },
-      { id: "3", type: "Addition", source: "2116738172", target: "f239d6bf6fec7240c6320e1c34d0b9a206b84398aa04620e4efee05d47d80db1", properties: {} },
-      { id: "4", type: "Addition", source: "2116738172", target: "13e6eb6defb785391d03650104542640fd10e96cda7a3f91dd89a841e6945d74", properties: {} },
-      { id: "5", type: "ArgumentIn", source: "2116738172", target: "13e6eb6defb785391d03650104542640fd10e96cda7a3f91dd89a841e6945d74", properties: {} },
-      { id: "6", type: "Addition", source: "211366945", target: "9600d18c6c05c1c919c41cb4e55a98122c7056c86aa4027a34dc23b5af07c12f", properties: {} },
-      { id: "7", type: "Addition", source: "211366945", target: "11d7b17889d89c56b99f58bc5f28b4e5bf779209b0291ffa6f34a96b333c59b9", properties: {} }
-    ]
-  };
 
   const editorEl = document.getElementById("editor");
   const errorEl = document.getElementById("error");
@@ -271,8 +254,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const mainEl = document.querySelector(".main");
   const sidebarEl = document.querySelector(".sidebar");
   const splitterEl = document.querySelector(".splitter");
-
-  editorEl.value = JSON.stringify(defaultJson, null, 2);
 
   if (mainEl && sidebarEl && splitterEl) {
     setupSplitter(mainEl, sidebarEl, splitterEl);
@@ -283,6 +264,22 @@ document.addEventListener("DOMContentLoaded", function () {
     network = render(editorEl, errorEl, containerEl, network);
   });
 
-  network = render(editorEl, errorEl, containerEl, network);
+  fetch(SAMPLE_GRAPH_URL)
+    .then(function (res) {
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      return res.json();
+    })
+    .then(function (data) {
+      editorEl.value = JSON.stringify(data, null, 2);
+      setError(errorEl, "");
+      network = render(editorEl, errorEl, containerEl, network);
+    })
+    .catch(function (err) {
+      editorEl.value = JSON.stringify(emptyGraphFallback(), null, 2);
+      setError(errorEl, "Impossible de charger sample.json : " + (err && err.message ? err.message : String(err)));
+      network = render(editorEl, errorEl, containerEl, network);
+    });
 });
 
