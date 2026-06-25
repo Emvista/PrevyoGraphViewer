@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prevyo Graph Viewer</title>
   <meta name="description" content="Visualisez le graphe issu de la sortie Prevyo (JSON nodes/edges). Rendu interactif avec vis-network." />
-  <meta name="application-version" content="0.1.0" />
+  <meta name="application-version" content="0.2.0" />
   <meta property="og:title" content="Prevyo Graph Viewer" />
   <meta property="og:description" content="Collez le JSON graphe exporté par Prevyo et explorez les nœuds et les liens." />
   <meta property="og:type" content="website" />
@@ -20,6 +20,23 @@
   <header>
     <strong>Prevyo Graph Viewer</strong>
     <button type="button" id="btnRender">Afficher le graphe</button>
+    <button type="button" id="btnTheme" aria-label="Passer en mode sombre">
+      <svg class="theme-icon theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg class="theme-icon theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+    <span class="edge-filters" aria-label="Filtres de relations">
+      Masquer les relations :
+      <label><input type="checkbox" id="filterContextSmall" checked /> ContextSmall</label>
+      <label><input type="checkbox" id="filterContextLarge" checked /> ContextLarge</label>
+    </span>
     <span class="hint">Collez ici le JSON graphe fourni par Prevyo (listes <code>nodes</code> et <code>edges</code>), puis cliquez sur Afficher le graphe.</span>
     <span id="error" class="error" role="status" aria-live="polite"></span>
   </header>
@@ -63,7 +80,7 @@
         </svg>
       </a>
     </span>
-    <span class="footer-version" data-version-footer title="Version de l’application">version 0.1.0</span>
+    <span class="footer-version" data-version-footer title="Version de l’application">version x</span>
   </footer>
 </body>
 </html>
