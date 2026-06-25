@@ -103,7 +103,7 @@ function buildVisData(raw, hiddenEdgeLabels) {
 
     if (total > 1) {
       // t ∈ [-1, 1] : répartit les edges symétriquement autour du centre
-      const t = total === 1 ? 0 : (pos / (total - 1)) * 2 - 1;
+      const t = (pos / (total - 1)) * 2 - 1;
       if (Math.abs(t) < 0.01) {
         visEdge.smooth = { type: "curvedCW", roundness: 0 };
       } else {
