@@ -1,5 +1,45 @@
 * { box-sizing: border-box; }
 
+:root {
+  --bg: #ffffff;
+  --bg-surface: #ffffff;
+  --text: #000000;
+  --border: #ccc;
+  --hint-color: #555;
+  --error-color: #8a1f1f;
+  --footer-text: #666;
+  --footer-link: #444;
+  --footer-link-hover: #111;
+  --footer-github-hover: #24292f;
+  --editor-bg: #ffffff;
+  --editor-text: #000000;
+  --splitter-bg: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
+  --splitter-dragging-bg: rgba(76, 139, 245, 0.25);
+  --tooltip-bg: #f5f5f5;
+  --tooltip-text: #111;
+  --tooltip-border: #d0d0d0;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --bg-surface: #252525;
+  --text: #e0e0e0;
+  --border: #444;
+  --hint-color: #999;
+  --error-color: #f48a8a;
+  --footer-text: #999;
+  --footer-link: #bbb;
+  --footer-link-hover: #eee;
+  --footer-github-hover: #eee;
+  --editor-bg: #1e1e1e;
+  --editor-text: #d4d4d4;
+  --splitter-bg: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.08), transparent);
+  --splitter-dragging-bg: rgba(76, 139, 245, 0.4);
+  --tooltip-bg: #2a2a2a;
+  --tooltip-text: #e0e0e0;
+  --tooltip-border: #555;
+}
+
 html {
   height: 100%;
 }
@@ -13,11 +53,15 @@ body {
   min-height: 100%;
   min-height: 100vh;
   min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
 }
 
 header {
-  padding: 8px 12px;
-  border-bottom: 1px solid #ccc;
+  position: relative;
+  padding: 8px 52px 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -27,7 +71,35 @@ header {
 header button {
   padding: 6px 12px;
   cursor: pointer;
+  background: var(--bg-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }
+
+header button:hover {
+  filter: brightness(0.9);
+}
+
+#btnTheme {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  padding: 5px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mode clair : affiche la lune (cliquer → passer en sombre) */
+.theme-icon-sun  { display: none; }
+.theme-icon-moon { display: block; }
+
+/* Mode sombre : affiche le soleil (cliquer → passer en clair) */
+[data-theme="dark"] .theme-icon-sun  { display: block; }
+[data-theme="dark"] .theme-icon-moon { display: none; }
 
 .main {
   flex: 1 1 0%;
@@ -50,7 +122,7 @@ header button {
   flex: 0 0 10px;
   align-self: stretch;
   cursor: col-resize;
-  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
+  background: var(--splitter-bg);
   touch-action: none;
 }
 
@@ -60,7 +132,7 @@ header button {
 }
 
 .splitter.is-dragging {
-  background: rgba(76, 139, 245, 0.25);
+  background: var(--splitter-dragging-bg);
 }
 
 #container {
@@ -68,6 +140,7 @@ header button {
   min-width: 0;
   min-height: 0;
   position: relative;
+  background: var(--bg);
 }
 
 #editor {
@@ -80,16 +153,32 @@ header button {
   padding: 8px;
   border: none;
   resize: horizontal;
+  background: var(--editor-bg);
+  color: var(--editor-text);
+}
+
+.edge-filters {
+  font-size: 12px;
+  color: var(--hint-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edge-filters label {
+  cursor: pointer;
+  user-select: none;
 }
 
 .hint {
   font-size: 12px;
-  color: #555;
+  color: var(--hint-color);
+  flex-basis: 100%;
 }
 
 .error {
   font-size: 12px;
-  color: #8a1f1f;
+  color: var(--error-color);
   margin-left: auto;
   min-height: 1em;
 }
@@ -109,9 +198,10 @@ header button {
 .footer {
   flex-shrink: 0;
   padding: 6px 12px;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
   font-size: 12px;
-  color: #666;
+  color: var(--footer-text);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -120,13 +210,13 @@ header button {
 }
 
 .footer-credits a {
-  color: #444;
+  color: var(--footer-link);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .footer-credits a:hover {
-  color: #111;
+  color: var(--footer-link-hover);
 }
 
 .footer-sep {
@@ -145,7 +235,7 @@ header button {
 }
 
 .footer-credits a.footer-github:hover {
-  color: #24292f;
+  color: var(--footer-github-hover);
 }
 
 .footer-github-icon {
@@ -159,6 +249,9 @@ header button {
 /* vis-network: node titles are plain text (not HTML); keep line breaks from \n */
 div.vis-tooltip {
   white-space: pre-line;
+  background: var(--tooltip-bg) !important;
+  color: var(--tooltip-text) !important;
+  border-color: var(--tooltip-border) !important;
 }
 
 @media (max-width: 900px) {
@@ -170,7 +263,7 @@ div.vis-tooltip {
   .sidebar {
     flex: 0 0 auto;
     max-width: none;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--border);
     align-self: stretch;
   }
 
@@ -185,4 +278,3 @@ div.vis-tooltip {
     resize: vertical;
   }
 }
-

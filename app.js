@@ -24,15 +24,15 @@ function labelsContainEvent(labelsArr) {
   return false;
 }
 
-function buildVisData(raw) {
+function buildVisData(raw, hiddenEdgeLabels) {
   const nodesIn = (raw && Array.isArray(raw.nodes)) ? raw.nodes : [];
   const edgesIn = (raw && Array.isArray(raw.edges)) ? raw.edges : [];
 
   const visNodes = nodesIn.map(function (n) {
-    const form = toDisplayText(n);
+    const formText = toDisplayText(n);
     const labels = Array.isArray(n.labels) ? n.labels.join("\n") : "";
 
-    const titleLines = ["id: " + (n && n.id != null ? String(n.id) : ""), "form: " + form];
+    const titleLines = ["id: " + (n && n.id != null ? String(n.id) : ""), "form: " + formText];
     if (labels) {
       titleLines.push("labels: " + labels);
     }
@@ -40,7 +40,12 @@ function buildVisData(raw) {
 
     // vis-network renders node title as plain text (not HTML); use \n only — no <br> or escapeHtml or tags show literally.
     const titleText = titleLines.join("\n");
-    const labelText = form.length > 40 ? (form.slice(0, 37) + "…") : form;
+    var labelText = formText.length > 40 ? (formText.slice(0, 37) + "…") : formText;
+    const isEvent = Array.isArray(n.labels) && n.labels.some(function (l) { return String(l).indexOf("Event") !== -1; });
+    if (isEvent) {
+      labelText = Array.isArray(n.labels) ? String(n.labels[0]).split("/").pop() : "";
+    }
+    
 
     const visNode = {
       id: n.id,
@@ -61,18 +66,55 @@ function buildVisData(raw) {
     return visNode;
   });
 
-  const visEdges = edgesIn.map(function (e, i) {
+  const filteredEdges = (hiddenEdgeLabels && hiddenEdgeLabels.size > 0)
+    ? edgesIn.filter(function (e) {
+        return !hiddenEdgeLabels.has((e && e.type != null) ? String(e.type) : "");
+      })
+    : edgesIn;
+
+  // Count edges per source→target pair to spread overlapping edges
+  const pairTotals = {};
+  filteredEdges.forEach(function (e) {
+    const key = String(e.source) + "__" + String(e.target);
+    pairTotals[key] = (pairTotals[key] || 0) + 1;
+  });
+  const pairCursor = {};
+
+  const visEdges = filteredEdges.map(function (e, i) {
     const edgeId = (e && e.id != null) ? String(e.id) : ("e-" + i);
     const edgeLabel = (e && e.type != null) ? String(e.type) : "";
+    const key = String(e.source) + "__" + String(e.target);
+    const total = pairTotals[key];
+    const pos = pairCursor[key] || 0;
+    pairCursor[key] = pos + 1;
 
-    return {
+    // ~7px par caractère à font-size 11, + 80px de marge pour les nœuds et la flèche
+    const edgeLength = Math.max(120, edgeLabel.length * 7 + 80);
+
+    const visEdge = {
       id: edgeId,
       from: e.source,
       to: e.target,
       label: edgeLabel,
       arrows: "to",
-      font: { align: "middle", size: 11 }
+      font: { align: "middle", size: 11 },
+      length: edgeLength
     };
+
+    if (total > 1) {
+      // t ∈ [-1, 1] : répartit les edges symétriquement autour du centre
+      const t = (pos / (total - 1)) * 2 - 1;
+      if (Math.abs(t) < 0.01) {
+        visEdge.smooth = { type: "curvedCW", roundness: 0 };
+      } else {
+        visEdge.smooth = {
+          type: t > 0 ? "curvedCW" : "curvedCCW",
+          roundness: Math.abs(t) * 0.3 + 0.1
+        };
+      }
+    }
+
+    return visEdge;
   });
 
   return { nodes: visNodes, edges: visEdges };
@@ -82,7 +124,7 @@ function setError(errorEl, message) {
   errorEl.textContent = message || "";
 }
 
-function render(editorEl, errorEl, containerEl, currentNetwork) {
+function render(editorEl, errorEl, containerEl, currentNetwork, hiddenEdgeLabels) {
   let parsed;
   try {
     parsed = JSON.parse(editorEl.value);
@@ -92,13 +134,23 @@ function render(editorEl, errorEl, containerEl, currentNetwork) {
   }
 
   setError(errorEl, "");
-  const data = buildVisData(parsed);
+  const data = buildVisData(parsed, hiddenEdgeLabels || new Set());
   const options = {
     layout: { improvedLayout: true },
     physics: {
       enabled: true,
-      stabilization: { iterations: 200 }
+      solver: "barnesHut",
+      barnesHut: {
+        gravitationalConstant: -8000,
+        centralGravity: 0.3,
+        springLength: 200,
+        springConstant: 0.04,
+        damping: 0.09,
+        avoidOverlap: 1
+      },
+      stabilization: { iterations: 300 }
     },
+    nodes: { margin: 10 },
     edges: { smooth: { type: "cubicBezier" } },
     interaction: { hover: true, tooltipDelay: 120 }
   };
@@ -107,16 +159,19 @@ function render(editorEl, errorEl, containerEl, currentNetwork) {
     currentNetwork.destroy();
   }
   const network = new vis.Network(containerEl, data, options);
-  // Safari may lay out the flex pane after first paint; defer fit so vis gets real container size.
-  if (typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(function () {
+  network.on("stabilizationIterationsDone", function () {
+    network.setOptions({ physics: { enabled: false } });
+    // Safari may lay out the flex pane after first paint; defer fit so vis gets real container size.
+    if (typeof requestAnimationFrame === "function") {
       requestAnimationFrame(function () {
-        if (typeof network.fit === "function") {
-          network.fit({ animation: false });
-        }
+        requestAnimationFrame(function () {
+          if (typeof network.fit === "function") {
+            network.fit({ animation: false });
+          }
+        });
       });
-    });
-  }
+    }
+  });
   return network;
 }
 
@@ -254,15 +309,47 @@ document.addEventListener("DOMContentLoaded", function () {
   const mainEl = document.querySelector(".main");
   const sidebarEl = document.querySelector(".sidebar");
   const splitterEl = document.querySelector(".splitter");
+  const filterSmallEl = document.getElementById("filterContextSmall");
+  const filterLargeEl = document.getElementById("filterContextLarge");
+  const btnThemeEl = document.getElementById("btnTheme");
+
+  // Theme
+  function applyTheme(dark) {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    if (btnThemeEl) {
+      btnThemeEl.setAttribute("aria-label", dark ? "Passer en mode clair" : "Passer en mode sombre");
+    }
+    try { window.localStorage.setItem("prevyo.theme", dark ? "dark" : "light"); } catch (_) {}
+  }
+  const savedTheme = (function () { try { return window.localStorage.getItem("prevyo.theme"); } catch (_) { return null; } }());
+  applyTheme(savedTheme === "dark");
+  if (btnThemeEl) {
+    btnThemeEl.addEventListener("click", function () {
+      applyTheme(document.documentElement.getAttribute("data-theme") !== "dark");
+    });
+  }
 
   if (mainEl && sidebarEl && splitterEl) {
     setupSplitter(mainEl, sidebarEl, splitterEl);
   }
 
+  function getHiddenEdgeLabels() {
+    const hidden = new Set();
+    if (filterSmallEl && filterSmallEl.checked) { hidden.add("ContextSmall"); }
+    if (filterLargeEl && filterLargeEl.checked) { hidden.add("ContextLarge"); }
+    return hidden;
+  }
+
   let network = null;
   btnEl.addEventListener("click", function () {
-    network = render(editorEl, errorEl, containerEl, network);
+    network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
   });
+
+  function onFilterChange() {
+    network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
+  }
+  if (filterSmallEl) { filterSmallEl.addEventListener("change", onFilterChange); }
+  if (filterLargeEl) { filterLargeEl.addEventListener("change", onFilterChange); }
 
   fetch(SAMPLE_GRAPH_URL)
     .then(function (res) {
@@ -274,12 +361,12 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(function (data) {
       editorEl.value = JSON.stringify(data, null, 2);
       setError(errorEl, "");
-      network = render(editorEl, errorEl, containerEl, network);
+      network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
     })
     .catch(function (err) {
       editorEl.value = JSON.stringify(emptyGraphFallback(), null, 2);
       setError(errorEl, "Impossible de charger sample.json : " + (err && err.message ? err.message : String(err)));
-      network = render(editorEl, errorEl, containerEl, network);
+      network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
     });
 });
 
