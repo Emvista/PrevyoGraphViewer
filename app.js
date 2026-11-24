@@ -10,18 +10,14 @@ function toDisplayText(node) {
   return "";
 }
 
-/** True if any entry in labels[] contains the substring "Event" (e.g. Thing/Abstract/Event/Attack). */
-function labelsContainEvent(labelsArr) {
-  if (!Array.isArray(labelsArr)) {
-    return false;
-  }
-  let i = 0;
-  for (i = 0; i < labelsArr.length; i += 1) {
-    if (String(labelsArr[i]).indexOf("Event") !== -1) {
-      return true;
-    }
-  }
-  return false;
+/** Type path of a node, e.g. "Thing/Abstract/Event/LegalEvent/Arrest". */
+function nodeType(node) {
+  return (node && node.type != null) ? String(node.type) : "";
+}
+
+/** True if the node type path contains an "Event" segment. */
+function isEventType(typePath) {
+  return typePath.split("/").indexOf("Event") !== -1;
 }
 
 function buildVisData(raw, hiddenEdgeLabels) {
@@ -30,22 +26,30 @@ function buildVisData(raw, hiddenEdgeLabels) {
 
   const visNodes = nodesIn.map(function (n) {
     const formText = toDisplayText(n);
-    const labels = Array.isArray(n.labels) ? n.labels.join("\n") : "";
+    const typePath = nodeType(n);
+    const isEvent = isEventType(typePath);
 
     const titleLines = ["id: " + (n && n.id != null ? String(n.id) : ""), "form: " + formText];
-    if (labels) {
-      titleLines.push("labels: " + labels);
+    if (typePath) {
+      titleLines.push("type: " + typePath);
     }
-    titleLines.push("properties: " + JSON.stringify((n && n.properties) ? n.properties : {}, null, 0));
+    if (n && n.kind != null) {
+      titleLines.push("kind: " + String(n.kind));
+    }
+    if (n && n.depth != null) {
+      titleLines.push("depth: " + String(n.depth));
+    }
+    if (n && n.mentionCount != null) {
+      titleLines.push("mentions: " + String(n.mentionCount));
+    }
+    titleLines.push("properties:\n" + JSON.stringify((n && n.properties) ? n.properties : {}, null, 2));
 
     // vis-network renders node title as plain text (not HTML); use \n only — no <br> or escapeHtml or tags show literally.
     const titleText = titleLines.join("\n");
     var labelText = formText.length > 40 ? (formText.slice(0, 37) + "…") : formText;
-    const isEvent = Array.isArray(n.labels) && n.labels.some(function (l) { return String(l).indexOf("Event") !== -1; });
     if (isEvent) {
-      labelText = Array.isArray(n.labels) ? String(n.labels[0]).split("/").pop() : "";
+      labelText = typePath.split("/").pop();
     }
-    
 
     const visNode = {
       id: n.id,
@@ -54,13 +58,32 @@ function buildVisData(raw, hiddenEdgeLabels) {
       font: { size: 14 }
     };
 
-    if (labelsContainEvent(n.labels)) {
+    if (isEvent) {
       visNode.color = {
         background: "#c8e6c9",
         border: "#2e7d32",
         highlight: { background: "#a5d6a7", border: "#1b5e20" },
         hover: { background: "#c8e6c9", border: "#2e7d32" }
       };
+    }
+
+    // Nœuds racines (depth 0) mis en avant : fond plein foncé, texte blanc, halo doux de la même teinte.
+    if (n && Number(n.depth) === 0) {
+      const accent = isEvent
+        ? { bg: "#2e7d32", border: "#1b5e20", hover: "#388e3c", halo: "rgba(46, 125, 50, 0.45)" }
+        : { bg: "#1e63c4", border: "#174ea0", hover: "#2a72d6", halo: "rgba(30, 99, 196, 0.45)" };
+      visNode.color = {
+        background: accent.bg,
+        border: accent.border,
+        highlight: { background: accent.hover, border: accent.border },
+        hover: { background: accent.hover, border: accent.border }
+      };
+      visNode.borderWidth = 2;
+      visNode.borderWidthSelected = 3;
+      visNode.font = { size: 16, color: "#ffffff" };
+      visNode.margin = 12;
+      visNode.shadow = { enabled: true, size: 14, x: 0, y: 0, color: accent.halo };
+      visNode.mass = 2;
     }
 
     return visNode;
@@ -124,12 +147,39 @@ function setError(errorEl, message) {
   errorEl.textContent = message || "";
 }
 
-function render(editorEl, errorEl, containerEl, currentNetwork, hiddenEdgeLabels) {
+/** Overlay de chargement affiché au-dessus du graphe. */
+function createLoader(loaderEl, textEl) {
+  function setText(text) {
+    if (textEl) {
+      textEl.textContent = text;
+    }
+  }
+  return {
+    show: function (text) {
+      setText(text || "Chargement du graphe…");
+      if (loaderEl) {
+        loaderEl.hidden = false;
+      }
+    },
+    progress: function (done, total) {
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      setText("Calcul de la disposition… " + pct + " %");
+    },
+    hide: function () {
+      if (loaderEl) {
+        loaderEl.hidden = true;
+      }
+    }
+  };
+}
+
+function render(editorEl, errorEl, containerEl, currentNetwork, hiddenEdgeLabels, loader) {
   let parsed;
   try {
     parsed = JSON.parse(editorEl.value);
   } catch (err) {
     setError(errorEl, "JSON invalide : " + (err && err.message ? err.message : String(err)));
+    loader.hide();
     return currentNetwork;
   }
 
@@ -158,8 +208,20 @@ function render(editorEl, errorEl, containerEl, currentNetwork, hiddenEdgeLabels
   if (currentNetwork) {
     currentNetwork.destroy();
   }
-  const network = new vis.Network(containerEl, data, options);
+  let network;
+  try {
+    network = new vis.Network(containerEl, data, options);
+  } catch (err) {
+    setError(errorEl, "Erreur de rendu : " + (err && err.message ? err.message : String(err)));
+    loader.hide();
+    return null;
+  }
+  network.on("stabilizationProgress", function (params) {
+    loader.progress(params.iterations, params.total);
+  });
+  network.once("stabilized", loader.hide);
   network.on("stabilizationIterationsDone", function () {
+    loader.hide();
     network.setOptions({ physics: { enabled: false } });
     // Safari may lay out the flex pane after first paint; defer fit so vis gets real container size.
     if (typeof requestAnimationFrame === "function") {
@@ -340,17 +402,34 @@ document.addEventListener("DOMContentLoaded", function () {
     return hidden;
   }
 
+  const loader = createLoader(document.getElementById("loader"), document.getElementById("loaderText"));
   let network = null;
-  btnEl.addEventListener("click", function () {
-    network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
-  });
+  let renderToken = 0;
+
+  // Affiche le loader puis laisse le navigateur le peindre avant le calcul (bloquant) du layout.
+  function scheduleRender() {
+    renderToken += 1;
+    const token = renderToken;
+    loader.show();
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        if (token !== renderToken) {
+          return;
+        }
+        network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels(), loader);
+      }, 0);
+    });
+  }
+
+  btnEl.addEventListener("click", scheduleRender);
 
   function onFilterChange() {
-    network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
+    scheduleRender();
   }
   if (filterSmallEl) { filterSmallEl.addEventListener("change", onFilterChange); }
   if (filterLargeEl) { filterLargeEl.addEventListener("change", onFilterChange); }
 
+  loader.show("Chargement de sample.json…");
   fetch(SAMPLE_GRAPH_URL)
     .then(function (res) {
       if (!res.ok) {
@@ -361,12 +440,12 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(function (data) {
       editorEl.value = JSON.stringify(data, null, 2);
       setError(errorEl, "");
-      network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
+      scheduleRender();
     })
     .catch(function (err) {
       editorEl.value = JSON.stringify(emptyGraphFallback(), null, 2);
       setError(errorEl, "Impossible de charger sample.json : " + (err && err.message ? err.message : String(err)));
-      network = render(editorEl, errorEl, containerEl, network, getHiddenEdgeLabels());
+      scheduleRender();
     });
 });
 

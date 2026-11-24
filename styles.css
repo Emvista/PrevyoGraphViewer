@@ -135,12 +135,59 @@ header button:hover {
   background: var(--splitter-dragging-bg);
 }
 
+.graph-pane {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
 #container {
   flex: 1 1 0%;
   min-width: 0;
   min-height: 0;
   position: relative;
   background: var(--bg);
+}
+
+/* Loader affiché pendant le chargement / calcul du layout */
+.loader {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
+  color: var(--hint-color);
+  font-size: 14px;
+  backdrop-filter: blur(2px);
+}
+
+.loader[hidden] {
+  display: none;
+}
+
+.loader-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid color-mix(in srgb, #1e63c4 20%, transparent);
+  border-top-color: #1e63c4;
+  animation: loader-spin 0.8s linear infinite;
+}
+
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-spinner {
+    animation-duration: 2.4s;
+  }
 }
 
 #editor {
@@ -248,7 +295,15 @@ header button:hover {
 
 /* vis-network: node titles are plain text (not HTML); keep line breaks from \n */
 div.vis-tooltip {
-  white-space: pre-line;
+  /* pre-wrap conserve l'indentation du JSON des properties et replie les lignes trop longues */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: min(560px, 90vw);
+  max-height: 70vh;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
   background: var(--tooltip-bg) !important;
   color: var(--tooltip-text) !important;
   border-color: var(--tooltip-border) !important;
