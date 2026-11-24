@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prevyo Graph Viewer</title>
   <meta name="description" content="Visualisez le graphe issu de la sortie Prevyo (JSON nodes/edges). Rendu interactif avec vis-network." />
-  <meta name="application-version" content="0.2.0" />
+  <meta name="application-version" content="0.3.0" />
   <meta property="og:title" content="Prevyo Graph Viewer" />
   <meta property="og:description" content="Collez le JSON graphe exporté par Prevyo et explorez les nœuds et les liens." />
   <meta property="og:type" content="website" />
@@ -52,7 +52,13 @@
       aria-label="Redimensionner l'éditeur"
       tabindex="0"
     ></div>
-    <div id="container" aria-label="Graphe"></div>
+    <div class="graph-pane">
+      <div id="container" aria-label="Graphe"></div>
+      <div id="loader" class="loader" role="status" aria-live="polite">
+        <span class="loader-spinner" aria-hidden="true"></span>
+        <span id="loaderText" class="loader-text">Chargement du graphe…</span>
+      </div>
+    </div>
   </div>
   <footer class="footer">
     <span class="footer-credits">

@@ -14,7 +14,7 @@ Ce code est édité par **[Emvista](https://emvista.com)**. Emvista propose **[P
 
 - Éditeur JSON à gauche, graphe à droite, avec **splitter** redimensionnable (largeur mémorisée dans le navigateur).
 - Bouton **Afficher le graphe** pour re-parser le JSON et mettre à jour la vue.
-- Les nœuds dont au moins un label contient `Event` sont affichés en **vert** (y compris au survol).
+- Les nœuds dont le `type` contient le segment `Event` sont affichés en **vert** (y compris au survol), avec pour label le dernier segment du type (ex. `Thing/Abstract/Event/LegalEvent/Arrest` → `Arrest`).
 - Affichage des erreurs de parsing JSON dans l’interface (sans `alert`).
 - Prêt pour un déploiement **GitHub Pages** (fichiers HTML/CSS/JS uniquement).
 
@@ -24,6 +24,7 @@ Le schéma correspond à la **sortie graphique Prevyo** : un objet racine avec
 
 - **`nodes`** : tableau d’objets (champs typiques : `id`, `form`, `labels`, `properties`, etc.).
 - **`edges`** : tableau d’objets avec au minimum **`source`**, **`target`**, et éventuellement **`type`**, **`id`**.
+- **`meta`** (optionnel, ignoré par le viewer) : informations de pagination / comptage.
 
 ## Fichiers principaux
 
